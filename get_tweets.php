@@ -45,12 +45,6 @@ $settings = array(
 <h1>Twitter</h1>
 <?php
 $ttrE = new MyClass($settings);
-
-echo '<hr><h2>test</h2>';
-$test = $ttrE->getTweetInfo('1225164230766350341,78');
-var_dump($test);die;
-
-
 $searchList = $ttrE ->searchUser($row[0]['name']);
 $paramFromFilter = [
         'name'=>$row[0]['name'],
@@ -63,15 +57,42 @@ $paramFromFilter = [
 
 
 $arrSuitableUsersByDescription = $ttrE->filterUsersByDescription($searchList, $paramFromFilter);
-var_dump($arrSuitableUsersByDescription);
+//var_dump($arrSuitableUsersByDescription);
 
 foreach ($arrSuitableUsersByDescription as $user){
 
-   $arrTweets = $ttrE ->getUserTweets($user['screen_name']);
-   $tweetStatistics = $ttrE->getTweetStatistics($arrTweets);
-   echo '<hr>';
-    var_dump($tweetStatistics);
-   echo '<hr>';
+    $arrTweets = $ttrE->getUserTweets($user['screen_name']);
+    $statistics = $ttrE->getTweetStatistics($arrTweets);
+    $urlRecentTweet = 'https://twitter.com/'.$user['screen_name'].'/status/'.$statistics['recentTweetId'];
+//    var_dump($urlRecentTweet);die;
+
+    $sql = "
+INSERT INTO
+players_twitter_data (player_id, twitter_url, count_tweets, count_followers, profile_image, retweets_tweet,likes_tweet, recent_post)
+VALUES (?,?,?,?,?,?,?,?)";
+    if(
+    $pdo->prepare($sql)->execute([
+        $idPlayer,
+        $user['url'],
+        $user['count_tweets'],
+        $user['count_followers'],
+        $user['img'],
+        $statistics['retweets_tweet'],
+        $statistics['like_tweet'],
+        $urlRecentTweet
+    ])){
+        echo 'good<br>';
+    }else{
+        echo 'false';die;
+    }
+
+//    die;
+//
+//
+//   $tweetStatistics = $ttrE->getTweetStatistics($arrTweets);
+//   echo '<hr>';
+////    var_dump($tweetStatistics);
+//   echo '<hr>';
 }
 
 die;
@@ -92,45 +113,8 @@ foreach ($arrSuitableUsersByDescription as $suitableUserData){
 
     }
 }
-die;
-if ($arrSuitableUserByDescription[0]['screen_name'] != ''):
+die;?>
 
-  $tweets = $ttrE->getUserTweets($arrSuitableUser[0]['screen_name']);
-var_dump($tweets);die;
-    echo '<h1>user post</h1>';
-    ?>
-
-    <?php
-//        echo '<strong>'.count($tweets).'</strong>';die;
-//        var_dump($tweets);die;
-    ?>
-
-
-    <?php foreach ($tweets as $tweet) : ?>
-    <img src="<?php echo $tweet['user']['profile_image_url']; ?>"/>
-    <a href="https://twitter.com/<?php echo $tweet['user']['screen_name']; ?>" target="_blank">
-        <b>@<?php echo $tweet['user']['screen_name']; ?></b>
-    </a> tweeted:
-    <br/>
-    <br/>
-    <?php echo $tweet['text']; ?>
-    <br/>
-    <br/>
-    Tweeted on <?php echo $tweet['created_at']; ?>
-    <br/>
-    <br/>
-    Like <?php echo $tweet['favorite_count']?>
-    <br/>
-    <br/>
-    Retweet <?php echo $tweet['retweet_count'];?>
-    <hr/>
-<?php
-//    echo '<pre>';
-//    print_r($tweet['favorite_count']);
-//    echo '</pre>';
-//    ?>
-<?php endforeach; ?>
-<?php endif; ?>
 
 <?php
 $sql = "

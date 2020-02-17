@@ -102,7 +102,6 @@ class MyClass extends TwitterAPIExchange
     public function filterUsersByDescription($searchList, $paramFromFilter)
     {
         $arrSuitableUser = [];
-
         foreach ($searchList as $item) {
             //filter users by data in description
             foreach ($paramFromFilter as $valueParam){
@@ -110,15 +109,25 @@ class MyClass extends TwitterAPIExchange
                     $profileImg = str_replace("normal", "400x400", $item['profile_image_url_https']);
                     $url_profile = "https://twitter.com/" . $item['screen_name'];
 
-                    $arrSuitableUser[] = [
-                        'player_id' => $paramFromFilter['id'],
-                        'user_id'=> $item['id'],
-                        'screen_name' => $item['screen_name'],
-                        'url' => $url_profile,
-                        'count_tweets' => $item['statuses_count'],
-                        'count_followers' => $item['followers_count'],
-                        'img' => $profileImg
-                    ];
+                    $duplicate = 'no';
+
+                    foreach ($arrSuitableUser as $value){
+                        if (in_array($item['screen_name'], $value, true)) {
+                            $duplicate = 'yes';
+                        }
+                    }
+
+                    if ($duplicate == 'no'){
+                        $arrSuitableUser[] = [
+                            'player_id' => $paramFromFilter['id'],
+                            'user_id'=> $item['id'],
+                            'screen_name' => $item['screen_name'],
+                            'url' => $url_profile,
+                            'count_tweets' => $item['statuses_count'],
+                            'count_followers' => $item['followers_count'],
+                            'img' => $profileImg
+                        ];
+                    }
                 }
             }
         }
@@ -152,24 +161,6 @@ class MyClass extends TwitterAPIExchange
         return $tweets;
 
     }
-
-    public function getTweetInfo($tweet_id)
-    {
-        $url = 'https://api.twitter.com/1.1/statuses/lookup.json';
-
-        $requestMethod = 'GET';
-
-        $getfield = '?id='.$tweet_id;
-
-        $this->setGetfield($getfield);
-        $this->buildOauth($url, $requestMethod);
-        $response = $this->performRequest(true, array(CURLOPT_SSL_VERIFYHOST => 0, CURLOPT_SSL_VERIFYPEER => 0));
-        $test = json_decode($response, true);
-
-        return $test;
-
-    }
-
 
     /**
      * @param array $arrTweets
@@ -209,27 +200,31 @@ class MyClass extends TwitterAPIExchange
     }
 
     /**
-     * @param array $arrTweet
+     * @param array $arrTweets
      * @return array
      */
-    public function getTweetStatistics(array $arrTweet)
+    public function getTweetStatistics(array $arrTweets)
     {
         $like_tweet = 0;
         $retweets_tweet = 0;
+        $countTweet = 0;
+        $recentTweetId = 0;
 
-//        echo count($arrTweet);die;
-        foreach ($arrTweet as $tweet){
-            $like_tweet += (int)$tweet['favorite_count'];
-            $retweets_tweet += (int)$tweet['retweet_count'];
-            var_dump($tweet);die;
+        foreach ($arrTweets as $oneTweet){
+
+            if(!array_key_exists('retweeted_status',$oneTweet)){
+                if($recentTweetId == 0){
+                    $recentTweetId = $oneTweet['id'];
+                }
+                $like_tweet += $oneTweet['favorite_count'];
+                $retweets_tweet += $oneTweet['retweet_count'];
+                $countTweet++;
+            }
         }
-
-//        $retweets_tweet = $retweets_tweet / count($arrTweet);
-//        $like_tweet = $like_tweet / count($arrTweet);
-
         $arrResult = [
-            'like_tweet'=>$like_tweet,
-            'retweets_tweet'=>$retweets_tweet
+            'recentTweetId' => $recentTweetId,
+            'like_tweet' => round(($like_tweet / $countTweet),2),
+            'retweets_tweet' => round(($retweets_tweet / $countTweet),2)
         ];
 
         return $arrResult;
