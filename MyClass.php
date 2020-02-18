@@ -34,7 +34,9 @@ class MyClass extends TwitterAPIExchange
 
             $word = ucwords($word);
 
-            $abbreviation .= $word[0];
+            if($word != "") {
+                $abbreviation .= $word[0];
+            }
         }
 
         return $abbreviation;
@@ -119,7 +121,6 @@ class MyClass extends TwitterAPIExchange
 
                     if ($duplicate == 'no'){
                         $arrSuitableUser[] = [
-                            'player_id' => $paramFromFilter['id'],
                             'user_id'=> $item['id'],
                             'screen_name' => $item['screen_name'],
                             'url' => $url_profile,
@@ -169,34 +170,13 @@ class MyClass extends TwitterAPIExchange
      */
     public function filterUsersByTweetData( $arrTweets,  $paramFromFilter)
     {
-//        var_dump($paramFromFilter);
-
         foreach ($arrTweets as $tweet) {
-//            var_dump($tweet);die;
-
             foreach ($paramFromFilter as $valueParam) {
-//                var_dump($tweet);die;
-                if (array_key_exists('text', (array)$tweet) && preg_match('%(^|\s+)' . $valueParam . '(\s+|,|\.)%', $tweet['text'])) {
+                if (is_array($tweet) && array_key_exists('text', $tweet) && preg_match('%(^|\s+)' . $valueParam . '(\s+|,|\.)%', $tweet['text'])) {
                     return true;
                 }
             }
         }
-
-//          if(array_key_exists('text', $tweet) && stristr($tweet['text'], $paramFromFilter['university'])){
-//            return true;
-//          }
-//          elseif (array_key_exists('text', $tweet) && stristr($tweet['text'], $paramFromFilter['abbreviate'])){
-//              return true;
-//          }
-//          elseif (array_key_exists('text', $tweet) && stristr($tweet['text'], $paramFromFilter['high_school'])){
-//              return true;
-//          }
-//          elseif (array_key_exists('text', $tweet) && stristr($tweet['text'], $paramFromFilter['team'])){
-//              return true;
-//          }else{
-//              return false;
-//          }
-
     }
 
     /**
@@ -210,24 +190,33 @@ class MyClass extends TwitterAPIExchange
         $countTweet = 0;
         $recentTweetId = 0;
 
-        foreach ($arrTweets as $oneTweet){
+        if(!empty($arrTweets)){
+            foreach ($arrTweets as $oneTweet){
 
-            if(!array_key_exists('retweeted_status',$oneTweet)){
-                if($recentTweetId == 0){
-                    $recentTweetId = $oneTweet['id'];
+                if(is_array($oneTweet)){
+                    if(!array_key_exists('retweeted_status',$oneTweet)){
+                        if($recentTweetId == 0){
+                            $recentTweetId = $oneTweet['id'];
+                        }
+                        $like_tweet += $oneTweet['favorite_count'];
+                        $retweets_tweet += $oneTweet['retweet_count'];
+                        $countTweet++;
+                    }
                 }
-                $like_tweet += $oneTweet['favorite_count'];
-                $retweets_tweet += $oneTweet['retweet_count'];
-                $countTweet++;
             }
+            if($countTweet != 0 && $like_tweet != 0){
+                $like_tweet = round(($like_tweet / $countTweet),2);
+            }
+            if($countTweet != 0 && $retweets_tweet != 0){
+                $retweets_tweet = round(($retweets_tweet / $countTweet),2);
+            }
+            $arrResult = [
+                'recentTweetId' => $recentTweetId,
+                'like_tweet' => $like_tweet,
+                'retweets_tweet' => $retweets_tweet
+            ];
+
+            return $arrResult;
         }
-        $arrResult = [
-            'recentTweetId' => $recentTweetId,
-            'like_tweet' => round(($like_tweet / $countTweet),2),
-            'retweets_tweet' => round(($retweets_tweet / $countTweet),2)
-        ];
-
-        return $arrResult;
-
     }
 }
