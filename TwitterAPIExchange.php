@@ -294,7 +294,7 @@ class TwitterAPIExchange
                 CURLOPT_HEADER => false,
                 CURLOPT_URL => $this->url,
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT => 10,
+                CURLOPT_TIMEOUT => 50,
             );
 
         if (!is_null($postfields))
@@ -319,7 +319,7 @@ class TwitterAPIExchange
         {
             curl_close($feed);
 
-            throw new \Exception($error);
+            throw new \Exception('CURLOPT_TIMEOUT');
         }
 
         curl_close($feed);
@@ -407,6 +407,32 @@ class TwitterAPIExchange
     public function getHttpStatusCode()
     {
         return $this->httpStatusCode;
+    }
+
+
+    public function sendReportToTelegram($message)
+    {
+        // сюда нужно вписать токен вашего бота
+        define('TELEGRAM_TOKEN', '1009131468:AAHuUUaCmHEBXjK8etHh6JjG0PQMrh3RTZE');
+
+// сюда нужно вписать ваш внутренний айдишник
+        define('TELEGRAM_CHATID', '554905211');
+
+        $ch = curl_init();
+        curl_setopt_array(
+            $ch,
+            array(
+                CURLOPT_URL => 'https://api.telegram.org/bot' . TELEGRAM_TOKEN . '/sendMessage',
+                CURLOPT_POST => TRUE,
+                CURLOPT_RETURNTRANSFER => TRUE,
+                CURLOPT_TIMEOUT => 10,
+                CURLOPT_POSTFIELDS => array(
+                    'chat_id' => TELEGRAM_CHATID,
+                    'text' => $message,
+                ),
+            )
+        );
+        curl_exec($ch);
     }
 
 }

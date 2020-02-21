@@ -14,6 +14,30 @@ class MyClass extends TwitterAPIExchange
 
 
     /**
+     * @param $str
+     * @param $startTag
+     * @param $endTag
+     * @param string $clearTag
+     * @return bool|string
+     */
+   public function substrBetween($str, $startTag, $endTag, $clearTag = '')
+    {
+        if (strlen($clearTag)) $str = str_replace($clearTag, "", $str);
+        $res = '';
+        if (!empty($startTag))
+            $i1 = stripos($str, $startTag);
+        else $i1 = 0;
+        if (!empty($endTag))
+            $i2 = stripos($str, $endTag, $i1);
+        else
+            $i2 = strlen($str);
+        if ($i1 !== false && $i2 !== false && $i1 < $i2) {
+            $res = substr($str, $i1 + strlen($startTag), $i2 - $i1 - strlen($startTag));
+        }
+        return $res;
+    }
+
+    /**
      * @param $string
      * @return string
      */
@@ -22,7 +46,7 @@ class MyClass extends TwitterAPIExchange
 
         $string = trim($string);
 
-        if(strpos($string,',')) $string=substrBetween($string,'',',');
+        if(strpos($string,',')) $string=$this->substrBetween($string,'',',');
 
         $abbreviation = "";
 
@@ -93,8 +117,8 @@ class MyClass extends TwitterAPIExchange
                     break;
                 }
             }
-            echo 'count pages search: ' . ($numberPageSearch - 1) . '<hr>';
-            echo 'count users search: ' . count($searchList) . '<hr>';
+//            echo 'count pages search: ' . ($numberPageSearch - 1) . '<hr>';
+//            echo 'count users search: ' . count($searchList) . '<hr>';
         }
 
         return $searchList;
@@ -107,27 +131,29 @@ class MyClass extends TwitterAPIExchange
         foreach ($searchList as $item) {
             //filter users by data in description
             foreach ($paramFromFilter as $valueParam){
-                if (array_key_exists('description', $item) && preg_match('%(^|\s+)' . $valueParam . '(\s+|,|\.)%',$item['description'] )) {
-                    $profileImg = str_replace("normal", "400x400", $item['profile_image_url_https']);
-                    $url_profile = "https://twitter.com/" . $item['screen_name'];
+                if($valueParam !== ''){
+                    if (array_key_exists('description', $item) && preg_match('%(^|\s+)' . $valueParam . '(\s+|,|\.)%',$item['description'] )){
+                        $profileImg = str_replace("normal", "400x400", $item['profile_image_url_https']);
+                        $url_profile = "https://twitter.com/" . $item['screen_name'];
 
-                    $duplicate = 'no';
+                        $duplicate = 'no';
 
-                    foreach ($arrSuitableUser as $value){
-                        if (in_array($item['screen_name'], $value, true)) {
-                            $duplicate = 'yes';
+                        foreach ($arrSuitableUser as $value){
+                            if (in_array($item['screen_name'], $value, true)) {
+                                $duplicate = 'yes';
+                            }
                         }
-                    }
 
-                    if ($duplicate == 'no'){
-                        $arrSuitableUser[] = [
-                            'user_id'=> $item['id'],
-                            'screen_name' => $item['screen_name'],
-                            'url' => $url_profile,
-                            'count_tweets' => $item['statuses_count'],
-                            'count_followers' => $item['followers_count'],
-                            'img' => $profileImg
-                        ];
+                        if ($duplicate == 'no'){
+                            $arrSuitableUser[] = [
+                                'user_id'=> $item['id'],
+                                'screen_name' => $item['screen_name'],
+                                'url' => $url_profile,
+                                'count_tweets' => $item['statuses_count'],
+                                'count_followers' => $item['followers_count'],
+                                'img' => $profileImg
+                            ];
+                        }
                     }
                 }
             }
@@ -172,8 +198,10 @@ class MyClass extends TwitterAPIExchange
     {
         foreach ($arrTweets as $tweet) {
             foreach ($paramFromFilter as $valueParam) {
-                if (is_array($tweet) && array_key_exists('text', $tweet) && preg_match('%(^|\s+)' . $valueParam . '(\s+|,|\.)%', $tweet['text'])) {
-                    return true;
+                if($valueParam !== ''){
+                    if (is_array($tweet) && array_key_exists('text', $tweet) && preg_match('%(^|\s+)' . $valueParam . '(\s+|,|\.)%', $tweet['text'])) {
+                        return true;
+                    }
                 }
             }
         }
@@ -194,7 +222,7 @@ class MyClass extends TwitterAPIExchange
             foreach ($arrTweets as $oneTweet){
 
                 if(is_array($oneTweet)){
-                    if(!array_key_exists('retweeted_status',$oneTweet)){
+                    if(!array_key_exists('retweeted_status',$oneTweet) && array_key_exists('id',$oneTweet)){
                         if($recentTweetId == 0){
                             $recentTweetId = $oneTweet['id'];
                         }
@@ -218,5 +246,31 @@ class MyClass extends TwitterAPIExchange
 
             return $arrResult;
         }
+    }
+
+
+    public function sendReportToTelegram($message)
+    {
+        // сюда нужно вписать токен вашего бота
+        define('TELEGRAM_TOKEN', '1009131468:AAHuUUaCmHEBXjK8etHh6JjG0PQMrh3RTZE');
+
+// сюда нужно вписать ваш внутренний айдишник
+        define('TELEGRAM_CHATID', '554905211');
+
+            $ch = curl_init();
+            curl_setopt_array(
+                $ch,
+                array(
+                    CURLOPT_URL => 'https://api.telegram.org/bot' . TELEGRAM_TOKEN . '/sendMessage',
+                    CURLOPT_POST => TRUE,
+                    CURLOPT_RETURNTRANSFER => TRUE,
+                    CURLOPT_TIMEOUT => 10,
+                    CURLOPT_POSTFIELDS => array(
+                        'chat_id' => TELEGRAM_CHATID,
+                        'text' => $message,
+                    ),
+                )
+            );
+            curl_exec($ch);
     }
 }
