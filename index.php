@@ -1,22 +1,32 @@
 <?php
+//require_once('config.php');
+//require_once('setting_db.php');
+//require_once('TwitterAPIExchange.php');
+//require_once('MyClass.php');
+//
+//$settings = array(
+//    'oauth_access_token' => TWITTER_ACCESS_TOKEN,
+//    'oauth_access_token_secret' => TWITTER_ACCESS_TOKEN_SECRET,
+//    'consumer_key' => TWITTER_CONSUMER_KEY,
+//    'consumer_secret' => TWITTER_CONSUMER_SECRET
+//);
+//
+//
+//$ttrw = new MyClass($settings);
+//$limit = $ttrw->getLimits();
+//var_dump($limit['resources']);
 
-$string ='Alou ioio IIo Rre';
-$string = trim($string);
+//$searchList = $ttrw->searchUser('Лопуленко');
+//var_dump($searchList);
 
-if(strpos($string,',')) $string=substrBetween($string,'',',');
+$contFoDate = "
+							Campus /
+							Featured /
+							News /
+			 February 19, 2020";
+//preg_match_all('%(?<=\/(?!.*\/)\s)([\s\S]+?)(?=$)%', $contFoDate, $textDd);
 
-$abbreviation = "";
 
-$words = explode(" ", "$string");
-foreach ($words as $word) {
-
-
-    if ($word[0] == '(' || ctype_lower($word[0]) === true) $word = '';
-
-    $word = ucwords($word);
-
-    if ($word != "") {
-        $abbreviation .= $word[0];
-    }
-}
-echo $abbreviation;
+preg_match_all('%(?<=\/(?!.*\/)\s)([\s\S]+?)(?=$)%', $contFoDate, $textDd);var_dump($textDd[0][0]);
+$date=date('F d Y', strtotime($textDd[0][0]));
+var_dump($date);

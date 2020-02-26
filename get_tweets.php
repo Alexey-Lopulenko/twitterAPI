@@ -9,13 +9,15 @@ set_time_limit(0);
 //$idPlayer = 1;
 
 
-
 error_reporting(E_ALL);
 ini_set('display_errors', true);
-$institutions = $pdo->query("SELECT id FROM institutions ORDER BY id ASC")->fetchAll();
+$startInstitution = $argv[1];
+$endInstitution = $argv[2];
+
+$institutions = $pdo->query("SELECT id FROM institutions WHERE (id >= {$startInstitution} and id <={$endInstitution}) ORDER BY id ASC")->fetchAll();
 
 $data = $pdo->prepare("
-SELECT players.id, players.name , teams.team , teams.university , players.high_school
+SELECT DISTINCT players.id, players.name , teams.team , teams.university , players.high_school
 FROM players
 INNER JOIN teams 
 ON players.institution_id = teams.institution_id 
@@ -31,6 +33,8 @@ $settings = array(
     'consumer_secret' => TWITTER_CONSUMER_SECRET
 );
 $ttrE = new MyClass($settings);
+$limit = $ttrE->getLimits();
+//var_dump($limit['resources']);die;
 //обработка игроков в рамках одного института
 foreach ($institutions as $institution) {
     $data->execute(['institution_id' => $institution['id']]);
@@ -66,9 +70,9 @@ foreach ($institutions as $institution) {
 
                             $arrTweets = $ttrE->getUserTweets($user['screen_name']);
                             $statistics = $ttrE->getTweetStatistics($arrTweets);
-                            if($statistics['recentTweetId']){
+                            if ($statistics['recentTweetId']) {
                                 $urlRecentTweet = 'https://twitter.com/' . $user['screen_name'] . '/status/' . $statistics['recentTweetId'];
-                            }else{
+                            } else {
                                 $urlRecentTweet = 'no tweet';
                             }
 
@@ -77,29 +81,34 @@ foreach ($institutions as $institution) {
 INSERT INTO
 players_twitter_data (player_id, twitter_url, count_tweets, count_followers, profile_image, retweets_tweet,likes_tweet, recent_post)
 VALUES (?,?,?,?,?,?,?,?)";
-                            if (
-                            $pdo->prepare($sql)->execute([
-                                $arrUserData['id'],
-                                $user['url'],
-                                $user['count_tweets'],
-                                $user['count_followers'],
-                                $user['img'],
-                                $statistics['retweets_tweet'],
-                                $statistics['like_tweet'],
-                                $urlRecentTweet
-                            ])) {
-                                echo 'good<br>';
-                            } else {
-                                $message = "Error - not save:\nplayerID=>".$arrUserData['id'].
-                                    "\nuserURL=>".$user['url'].
-                                    "\ncountTweet=>".$user['count_tweets'].
-                                    "\ncount_followers=>".$user['count_followers'].
-                                    "\nimg=>".$user['img'].
-                                    "\nretweets_tweet=>".$statistics['retweets_tweet'].
-                                    "\nlike_tweet=>".$statistics['like_tweet'].
-                                    "\nurlRecentTweet=>".$urlRecentTweet;
-                                $ttrE->sendReportToTelegram($message);
+                            $twitterUrl = $pdo->query("SELECT twitter_url FROM players_twitter_data WHERE twitter_url LIKE '%{$user['url']}%'")->fetchAll();
+
+                            if (count($twitterUrl) == 0) {
+                                if (
+                                $pdo->prepare($sql)->execute([
+                                    $arrUserData['id'],
+                                    $user['url'],
+                                    $user['count_tweets'],
+                                    $user['count_followers'],
+                                    $user['img'],
+                                    $statistics['retweets_tweet'],
+                                    $statistics['like_tweet'],
+                                    $urlRecentTweet
+                                ])) {
+                                    echo 'good<br>';
+                                } else {
+                                    $message = "Error - not save:\nplayerID=>" . $arrUserData['id'] .
+                                        "\nuserURL=>" . $user['url'] .
+                                        "\ncountTweet=>" . $user['count_tweets'] .
+                                        "\ncount_followers=>" . $user['count_followers'] .
+                                        "\nimg=>" . $user['img'] .
+                                        "\nretweets_tweet=>" . $statistics['retweets_tweet'] .
+                                        "\nlike_tweet=>" . $statistics['like_tweet'] .
+                                        "\nurlRecentTweet=>" . $urlRecentTweet;
+                                    $ttrE->sendReportToTelegram($message);
+                                }
                             }
+
                         }
                     }
 
@@ -125,29 +134,35 @@ VALUES (?,?,?,?,?,?,?,?)";
 INSERT INTO
 players_twitter_data (player_id, twitter_url, count_tweets, count_followers, profile_image, retweets_tweet,likes_tweet, recent_post)
 VALUES (?,?,?,?,?,?,?,?)";
-                                            //проверка сохранения в базу данных
-                                            if (
-                                            $pdo->prepare($sql)->execute([
-                                                $arrUserData['id'],
-                                                $url_profile,
-                                                $userData['statuses_count'],
-                                                $userData['followers_count'],
-                                                $profileImg,
-                                                $statistics['retweets_tweet'],
-                                                $statistics['like_tweet'],
-                                                $urlRecentTweet
-                                            ])) {
-                                                echo 'good<br>';
-                                            } else {
-                                                $message = "Error - not save:\n playerID=>".$arrUserData['id'].
-                                                    "\n userURL=>".$url_profile.
-                                                    "\ncountTweet=>".$userData['statuses_count'].
-                                                    "\ncount_followers=>".$userData['followers_count'].
-                                                    "\nimg=>".$profileImg.
-                                                    "\nretweets_tweet".$statistics['retweets_tweet'].
-                                                    "\nlike_tweet=>".$statistics['like_tweet'].
-                                                    "\nurlRecentTweet=>".$urlRecentTweet;
-                                                $ttrE->sendReportToTelegram($message);
+
+                                            $twitterUrl = $pdo->query(
+                                                "SELECT twitter_url FROM players_twitter_data WHERE twitter_url LIKE '%{$url_profile}%'")->fetchAll();
+
+                                            if (count($twitterUrl) == 0) {
+                                                //проверка сохранения в базу данных
+                                                if (
+                                                $pdo->prepare($sql)->execute([
+                                                    $arrUserData['id'],
+                                                    $url_profile,
+                                                    $userData['statuses_count'],
+                                                    $userData['followers_count'],
+                                                    $profileImg,
+                                                    $statistics['retweets_tweet'],
+                                                    $statistics['like_tweet'],
+                                                    $urlRecentTweet
+                                                ])) {
+                                                    echo 'good<br>';
+                                                } else {
+                                                    $message = "Error - not save:\n playerID=>" . $arrUserData['id'] .
+                                                        "\n userURL=>" . $url_profile .
+                                                        "\ncountTweet=>" . $userData['statuses_count'] .
+                                                        "\ncount_followers=>" . $userData['followers_count'] .
+                                                        "\nimg=>" . $profileImg .
+                                                        "\nretweets_tweet" . $statistics['retweets_tweet'] .
+                                                        "\nlike_tweet=>" . $statistics['like_tweet'] .
+                                                        "\nurlRecentTweet=>" . $urlRecentTweet;
+                                                    $ttrE->sendReportToTelegram($message);
+                                                }
                                             }
                                         }
                                     }
@@ -169,12 +184,12 @@ VALUES (?,?,?,?,?,?,?,?)";
                 $stmt->BindValue(':id', $arrUserData['id'], PDO::PARAM_INT);
                 $stmt->execute();
             }
-            $message = "Parse \n InstitutionID => ".$institution['id'];
+            $message = "Parse \n InstitutionID => " . $institution['id'];
             $ttrE->sendReportToTelegram($message);
-        }catch (Exception $e){
+        } catch (Exception $e) {
             $message = $e->getMessage();
             $ttrE->sendReportToTelegram($message);
-            if($message == 'CURLOPT_TIMEOUT'){
+            if ($message == 'CURLOPT_TIMEOUT') {
                 `php get_tweets.php`;
             }
         }

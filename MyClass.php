@@ -273,4 +273,24 @@ class MyClass extends TwitterAPIExchange
             );
             curl_exec($ch);
     }
+
+
+    public function getLimits()
+    {
+        $url = 'https://api.twitter.com/1.1/application/rate_limit_status.json';
+
+        $requestMethod = 'GET';
+
+        // twitter api endpoint data
+        $getfield = '?resources=help,users,search,statuses';
+
+        // make our api call to twitter
+
+        $this->setGetfield($getfield);
+        $this->buildOauth($url, $requestMethod);
+        $response = $this->performRequest(true, array(CURLOPT_SSL_VERIFYHOST => 0, CURLOPT_SSL_VERIFYPEER => 0));
+        $limits = json_decode($response, true);
+
+        return $limits;
+    }
 }
