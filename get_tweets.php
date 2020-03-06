@@ -46,8 +46,11 @@ foreach ($institutions as $institution) {
         try {
             //обработка всего списка поиска
             foreach ($row as $value) {
-//            echo '<center><h1>USER</h1></center>';
+
                 $arrUserData = (array)$value;
+                if (!$arrUserData['name']){
+                    continue;
+                }
                 $searchList = $ttrE->searchUser($arrUserData['name']);
 
                 if (!empty($searchList)) {

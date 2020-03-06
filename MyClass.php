@@ -132,7 +132,7 @@ class MyClass extends TwitterAPIExchange
             //filter users by data in description
             foreach ($paramFromFilter as $valueParam){
                 if($valueParam !== ''){
-                    if (array_key_exists('description', $item) && preg_match('%(^|\s+)' . $valueParam . '(\s+|,|\.)%',$item['description'] )){
+                    if (array_key_exists('description', $item) && preg_match('%(^|\s+)' . $valueParam . '(\s+|,|\.)%i',$item['description'] )){
                         $profileImg = str_replace("normal", "400x400", $item['profile_image_url_https']);
                         $url_profile = "https://twitter.com/" . $item['screen_name'];
 
@@ -199,7 +199,7 @@ class MyClass extends TwitterAPIExchange
         foreach ($arrTweets as $tweet) {
             foreach ($paramFromFilter as $valueParam) {
                 if($valueParam !== ''){
-                    if (is_array($tweet) && array_key_exists('text', $tweet) && preg_match('%(^|\s+)' . $valueParam . '(\s+|,|\.)%', $tweet['text'])) {
+                    if (is_array($tweet) && array_key_exists('text', $tweet) && preg_match('%(^|\s+)' . $valueParam . '(\s+|,|\.)%i', $tweet['text'])) {
                         return true;
                     }
                 }
