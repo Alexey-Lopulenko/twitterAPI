@@ -6,6 +6,8 @@
  * Time: 6:07 PM
  */
 
+require_once('setting_db.php');
+
 class MyClass extends TwitterAPIExchange
 {
     /** @var Response details about the result of the last request */
@@ -247,6 +249,62 @@ class MyClass extends TwitterAPIExchange
             return $arrResult;
         }
     }
+
+    /**
+     * @param $screen_name (The screen name of the user for whom to return results. Either a id or screen_name is required for this method.)
+     * @return array
+     * @throws Exception
+     */
+    public function getUserInfo($screen_name)
+    {
+
+        // twitter api endpoint
+        $url = 'https://api.twitter.com/1.1/users/show.json';
+
+        $requestMethod = 'GET';
+
+        // twitter api endpoint data
+        $request = '?screen_name='.$screen_name;
+
+        // make our api call to twitter
+
+        $this->setGetfield($request);
+        $this->buildOauth($url, $requestMethod);
+        $response = $this->performRequest(true, array(CURLOPT_SSL_VERIFYHOST => 0, CURLOPT_SSL_VERIFYPEER => 0));
+        $groupInfo = json_decode($response, true);
+
+        $arrGroupTweets = $this->getUserTweets($screen_name);
+
+        $tweetStat = $this->getTweetStatistics($arrGroupTweets);
+
+//        var_dump($tweetStat);die;
+
+        $arrGroupInfo = [
+            'count_tweet' => $groupInfo['statuses_count'],
+            'count_followers' => $groupInfo['followers_count'],
+            'profile_image' => $this->getImg($groupInfo['profile_image_url_https']),
+            'retweets_tweet' => $tweetStat['retweets_tweet'],
+            'likes_tweet' => $tweetStat['like_tweet'],
+            'recent_post' => 'https://twitter.com/JalenLovett/status/'.$tweetStat['recentTweetId'],
+        ];
+
+//        var_dump( $arrGroupInfo);die;
+
+        return $arrGroupInfo;
+    }
+
+
+    /**
+     * @param $image_url_https
+     * @return mixed (image 400x400)
+     */
+    public function getImg($image_url_https)
+    {
+        $profileImg = str_replace("normal", "400x400", $image_url_https);
+
+        return $profileImg;
+    }
+
 
 
     public function sendReportToTelegram($message)
