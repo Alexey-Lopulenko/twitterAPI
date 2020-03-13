@@ -80,6 +80,7 @@ foreach ($institutions as $institution) {
                             }
 
 
+
                             $sql = "
 INSERT INTO
 players_twitter_data (player_id, twitter_url, count_tweets, count_followers, profile_image, retweets_tweet,likes_tweet, recent_post)

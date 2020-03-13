@@ -307,6 +307,7 @@ class MyClass extends TwitterAPIExchange
 
 
 
+
     public function sendReportToTelegram($message)
     {
         // сюда нужно вписать токен вашего бота

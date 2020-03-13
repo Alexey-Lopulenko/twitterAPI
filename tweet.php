@@ -3,6 +3,7 @@
 require_once( 'config.php' );
 require_once( 'TwitterAPIExchange.php' );
 
+
 // settings for twitter api connection
 $settings = array(
     'oauth_access_token' => TWITTER_ACCESS_TOKEN,

@@ -21,6 +21,7 @@ $settings = array(
 $conf_social = new MyClass($settings);
 
 
+
 foreach ($conferences as $conference){
 //    var_dump($conference['org_id']);die;
 
